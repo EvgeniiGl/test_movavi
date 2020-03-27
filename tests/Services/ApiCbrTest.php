@@ -11,7 +11,11 @@ use PHPUnit\Framework\TestCase;
 
 class ApiCbrTest extends TestCase
 {
-    public function testQuoteParseCorrectResult()
+    protected $mock;
+    protected $guzzle;
+    protected $api;
+
+    public function setUp(): void
     {
         $response = '<?xml version="1.0" encoding="windows-1251"?>
 <ValCurs Date="25.10.2019" name="Foreign Currency Market">
@@ -30,19 +34,30 @@ class ApiCbrTest extends TestCase
         <Value>71,1400</Value>
     </Valute>
 </ValCurs>';
+
+        $this->mock = new MockHandler([
+            new Response(200, ['X-Foo' => 'Bar'], $response)
+        ]);
+
+        $handlerStack = HandlerStack::create($this->mock);
+        $this->guzzle = new GuzzleClient(['handler' => $handlerStack]);
+        $this->api = new ApiCbr($this->guzzle);
+    }
+
+    public function testQuoteParseCorrectResult()
+    {
         $result = [
             'USD' => "638600",
             'EUR' => "711400",
         ];
-        $mock = new MockHandler([
-            new Response(200, ['X-Foo' => 'Bar'], $response)
-        ]);
-
-        $handlerStack = HandlerStack::create($mock);
-        $guzzle = new GuzzleClient(['handler' => $handlerStack]);
-        $api = new ApiCbr($guzzle);
-        $response = $api->getQuotes(1420070400);
+        $response = $this->api->getQuotes(1420070400);
         $this->assertEquals($response, $result);
+    }
+
+    public function testSetUrlsCreateCorrectUrls()
+    {
+        $this->api->getQuotes(1420070400);
+        $this->assertEquals($this->api->getUrls(), ["http://www.cbr.ru/scripts/XML_daily.asp?date_req=01/01/2015"]);
     }
 
 }

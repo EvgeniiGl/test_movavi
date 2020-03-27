@@ -28,7 +28,10 @@ class ApiCbr implements ApiService
      * @var HttpClient
      */
     private $client;
-
+    /**
+     * @var array prepared urls for the API request
+     */
+    private $urls;
 
     /**
      * ApiCbr constructor.
@@ -41,13 +44,21 @@ class ApiCbr implements ApiService
     }
 
     /**
+     * @return array prepared urls for the API request
+     */
+    public function getUrls(): array
+    {
+        return $this->urls;
+    }
+
+    /**
      * @param int $date timestamp date
      * @return array urls for request
      */
-    private function getUrls(int $date): array
+    private function setUrls(int $date):void
     {
         $dateString = date($this->dateFormat, $date);
-        return [str_replace("{date}", $dateString, $this->url)];
+        $this->urls = [str_replace("{date}", $dateString, $this->url)];
     }
 
     /**
@@ -63,7 +74,7 @@ class ApiCbr implements ApiService
      * @param array $response
      * @return array
      */
-    private function parseResponse(array $response):array
+    private function parseResponse(array $response): array
     {
         $xml = simplexml_load_string($response[0]->getBody()->getContents());
         $result = [];
@@ -82,8 +93,8 @@ class ApiCbr implements ApiService
      */
     public function getQuotes(int $date): array
     {
-        $urls = $this->getUrls($date);
-        $response = $this->request($urls);
+        $this->setUrls($date);
+        $response = $this->request($this->getUrls());
         return $this->parseResponse($response);
     }
 }

@@ -30,6 +30,11 @@ class ApiRbc implements ApiService
      */
     private $client;
 
+    /**
+     * @var array prepared urls for the API request
+     */
+    private $urls;
+
 
     /**
      * ApiRbc constructor.
@@ -42,10 +47,18 @@ class ApiRbc implements ApiService
     }
 
     /**
+     * @return array prepared urls for the API request
+     */
+    public function getUrls(): array
+    {
+        return $this->urls;
+    }
+
+    /**
      * @param int $date timestamp date
      * @return array urls for request
      */
-    private function getUrls($date)
+    private function setUrls($date): void
     {
         $urls = [];
         $dateString = date($this->dateFormat, $date);
@@ -54,7 +67,7 @@ class ApiRbc implements ApiService
             $arrTo = [$code, $dateString];
             $urls[] = preg_replace($arrFrom, $arrTo, $this->url);
         }
-        return $urls;
+        $this->urls = $urls;
     }
 
     /**
@@ -76,7 +89,7 @@ class ApiRbc implements ApiService
         foreach ($responses as $response) {
             $val = json_decode($response->getBody()->getContents());
             $code = $val->meta->currency_from;
-            if (in_array($code, $this->config['codes'],true)) {
+            if (in_array($code, $this->config['codes'], true)) {
                 $result[$code] = Count::conversion($val->data->sum_result);
             }
         }
@@ -89,8 +102,8 @@ class ApiRbc implements ApiService
      */
     public function getQuotes(int $date): array
     {
-        $urls = $this->getUrls($date);
-        $response = $this->request($urls);
+        $this->setUrls($date);
+        $response = $this->request($this->getUrls());
         return $this->parseResponse($response);
     }
 }

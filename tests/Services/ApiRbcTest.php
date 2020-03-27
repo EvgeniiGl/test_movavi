@@ -11,7 +11,11 @@ use PHPUnit\Framework\TestCase;
 
 class ApiRbcTest extends TestCase
 {
-    public function testQuoteParseCorrectResult()
+    protected $mock;
+    protected $guzzle;
+    protected $api;
+
+    public function setUp(): void
     {
         $response1 = '{
     "status": 200,
@@ -45,21 +49,35 @@ class ApiRbcTest extends TestCase
         "rate2": 0.0144
     }
 }';
-        $result = [
-            'USD' => "619057",
-            'EUR' => "693406",
-        ];
-        $mock = new MockHandler([
+        $this->mock = new MockHandler([
             new Response(200, ['X-Foo' => 'Bar'], $response1),
             new Response(200, ['X-Foo' => 'Bar'], $response2)
         ]);
 
-        $handlerStack = HandlerStack::create($mock);
-        $guzzle = new GuzzleClient(['handler' => $handlerStack]);
-        $api = new ApiRbc($guzzle);
-        $response = $api->getQuotes(1420070400);
+        $handlerStack = HandlerStack::create($this->mock);
+        $this->guzzle = new GuzzleClient(['handler' => $handlerStack]);
+        $this->api = new ApiRbc($this->guzzle);
+    }
+
+    public function testQuoteParseCorrectResult()
+    {
+        $result = [
+            'USD' => "619057",
+            'EUR' => "693406",
+        ];
+
+        $response = $this->api->getQuotes(1420070400);
         $this->assertEquals($response, $result);
     }
 
+    public function testSetUrlsCreateCorrectUrls()
+    {
+        $result = [
+            "https://cash.rbc.ru/cash/json/converter_currency_rate/?currency_from=USD&currency_to=RUR&source=cbrf&sum=1&date=2015-01-01",
+            "https://cash.rbc.ru/cash/json/converter_currency_rate/?currency_from=EUR&currency_to=RUR&source=cbrf&sum=1&date=2015-01-01"
+        ];
+        $this->api->getQuotes(1420070400);
+        $this->assertEquals($this->api->getUrls(), $result);
+    }
 
 }

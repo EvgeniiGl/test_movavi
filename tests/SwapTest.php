@@ -15,13 +15,13 @@ class SwapTest extends TestCase
         $this->assertEquals(1420070400, $swap->getDate());
     }
 
-    public function test__constructSetDateIfDateParamNull()
+    public function test__constructSetDateCorrectIfDateParamNull()
     {
         $swap = new Swap();
         $this->assertEquals(time(), $swap->getDate());
     }
 
-    public function test__constructSetDateIfDateParamPassed()
+    public function test__constructSetDateCorrectIfDateParamPassed()
     {
         $swap = new Swap('2015-01-01');
         $this->assertEquals(1420070400, $swap->getDate());
